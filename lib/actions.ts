@@ -13,41 +13,31 @@ export async function getTodos(): Promise<Todo[]> {
 }
 
 // 새 todo 추가
-export async function addTodo(
-  prevState: { error?: string; success?: boolean } | null,
-  formData: FormData
-) {
-  const title = formData.get("title") as string;
-
-  if (!title || title.trim() === "") {
-    return { error: "제목을 입력해주세요." };
-  }
-
+export async function addTodo(formData: FormData) {
+  const title = (formData.get("title") as string)?.trim();
+  if (!title) return;
   db.prepare("INSERT INTO todos (title, completed) VALUES (?, ?)").run(
     title.trim(),
     0
   );
-
   revalidatePath("/");
-  return { success: true };
 }
 
 // todo 완료 상태 토글
-export async function toggleTodo(id: number) {
-  db.prepare(
-    "UPDATE todos SET completed = NOT completed WHERE id = ?"
-  ).run(id);
-
+export async function toggleTodo(formData: FormData) {
+  const id = Number(formData.get("id"));
+  const done = formData.get("done") === "on" || formData.get("done") === "true";
+  db.prepare("UPDATE todos SET completed = ? WHERE id = ?").run(done, id);
   revalidatePath("/");
-  return { success: true };
 }
 
-// todo 삭제
-export async function deleteTodo(id: number) {
-  db.prepare("DELETE FROM todos WHERE id = ?").run(id);
 
+
+// todo 삭제
+export async function deleteTodo(formData: FormData) {
+  const id = Number(formData.get("id"));
+  db.prepare("DELETE FROM todos WHERE id = ?").run(id);
   revalidatePath("/");
-  return { success: true };
 }
 
 // todo 수정
